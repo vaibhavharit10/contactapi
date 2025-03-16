@@ -1,0 +1,39 @@
+version: '3.8'  # Specifies the Docker Compose version for compatibility
+
+services:
+  db:  # Service name for PostgreSQL
+    image: postgres:latest  # Pulls the latest PostgreSQL image
+    container_name: contactapi-postgres  # Names the container
+    environment:  # Sets up the database credentials and name
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: contact_db
+    ports:  # Maps port 5432 to host (optional for local testing)
+      - "5432:5432"
+    volumes:  # Persists data in a named volume
+      - pgdata:/var/lib/postgresql/data
+    networks:  # Joins the app-network for communication
+      - app-network
+
+  app:  # Service name for the Spring Boot app
+    build:  # Builds the image from the Dockerfile
+      context: .  # Uses the current directory
+      dockerfile: Dockerfile  # Specifies the Dockerfile
+    container_name: contactapi-app  # Names the container
+    ports:  # Maps port 8080 to host
+      - "8080:8080"
+    depends_on:  # Ensures db starts before app
+      - db
+    environment:  # Sets environment variables (optional, matches application.properties)
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/contact_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    networks:  # Joins the same network as db
+      - app-network
+
+networks:
+  app-network:  # Custom network for service communication
+    driver: bridge  # Uses the default bridge network type
+
+volumes:
+  pgdata:  # Named volume to store PostgreSQL data
